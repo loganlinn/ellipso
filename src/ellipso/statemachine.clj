@@ -21,7 +21,8 @@
 (defn- invalidate [context]
   (move-to context
            (fn [context b]
-             (println "Invalid context" context) (flush)
+             (println "Invalid context" context)
+             (flush)
              context)))
 
 ; ********************************************************************************************
@@ -71,47 +72,47 @@
 
 ; Packet handling ...
 (defn- handle-sop1 [context b]
-  (println "handle-sop1" b)
+  ;(println "handle-sop1" b)
   (case b
     0xFF (move-to context handle-sop2)
     (invalidate context)))
 
 (defn- handle-sop2 [context b]
-  (println "handle-sop2" b)
+  ;(println "handle-sop2" b)
   (case b
     0xFF (move-to (initialise-packet context :synchronous)  handle-synchronous-mrsp)
     0xFE (move-to (initialise-packet context :asynchronous) handle-asynchronous-idcode)
     (invalidate context)))
 
 (defn- handle-checksum [context b]
-  (println "handle-checksum" b)
+  ;(println "handle-checksum" b)
   ((:callback context) (:packet context))
   (finalise context))
 
 ; Synchronous message handling ...
 (defn- handle-synchronous-mrsp [context b]
-  (println "handle-synchronous-mrsp" b)
+  ;(println "handle-synchronous-mrsp" b)
   (move-to (update-frame context :mrsp b) handle-synchronous-seqid))
 
 (defn- handle-synchronous-seqid [context b]
-  (println "handle-synchronous-seqid" b)
+  ;(println "handle-synchronous-seqid" b)
   (move-to (update-frame context :seqid b) handle-synchronous-dlen))
 
 (defn- handle-synchronous-dlen [context dlen-plus-checksum]
-  (println "handle-synchronous-dlen" dlen-plus-checksum)
+  ;(println "handle-synchronous-dlen" dlen-plus-checksum)
   (let [dlen (dec dlen-plus-checksum)]
     (move-to context (read-data-handler dlen handle-checksum))))
 
 ; Asynchronous message handling ...
 (defn- handle-asynchronous-idcode [context b]
-  (println "handle-asynchronous-idcode" b)
+  ;(println "handle-asynchronous-idcode" b)
   (move-to (update-frame context :idcode b) handle-asynchronous-dlen))
 
 (defn- handle-asynchronous-dlen [context dlen-msb]
-  (println "handle-asynchronous-dlen" dlen-msb)
+  ;(println "handle-asynchronous-dlen" dlen-msb)
   (move-to context
            (fn [context dlen-lsb]
-             (println "handle-asynchronous-dlen" dlen-lsb)
+             ;(println "handle-asynchronous-dlen" dlen-lsb)
              (let [dlen (dec (bit-or (bit-shift-left dlen-msb 8) dlen-lsb))]
                (move-to context (read-data-handler dlen handle-checksum))))))
 
